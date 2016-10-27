@@ -404,11 +404,14 @@ class JobState( object ):
         self.job_wrapper = job_wrapper
         self.job_destination = job_destination
 
-    def set_defaults( self, files_dir ):
+    def set_defaults( self, files_dir, job_script_directory=None ):
         if self.job_wrapper is not None:
             id_tag = self.job_wrapper.get_id_tag()
             if files_dir is not None:
-                self.job_file = JobState.default_job_file( files_dir, id_tag )
+                if job_script_directory:
+                    self.job_file = JobState.default_job_file( job_script_directory, id_tag )
+                else:
+                    self.job_file = JobState.default_job_file( files_dir, id_tag )
                 self.output_file = os.path.join( files_dir, 'galaxy_%s.o' % id_tag )
                 self.error_file = os.path.join( files_dir, 'galaxy_%s.e' % id_tag )
                 self.exit_code_file = os.path.join( files_dir, 'galaxy_%s.ec' % id_tag )
@@ -435,7 +438,7 @@ class AsynchronousJobState( JobState ):
     to communicate with distributed resource manager.
     """
 
-    def __init__( self, files_dir=None, job_wrapper=None, job_id=None, job_file=None, output_file=None, error_file=None, exit_code_file=None, job_name=None, job_destination=None  ):
+    def __init__( self, files_dir=None, job_wrapper=None, job_id=None, job_file=None, output_file=None, error_file=None, exit_code_file=None, job_name=None, job_destination=None, job_script_directory=None ):
         super( AsynchronousJobState, self ).__init__( job_wrapper, job_destination )
         self.old_state = None
         self._running = False
@@ -451,7 +454,7 @@ class AsynchronousJobState( JobState ):
         self.exit_code_file = exit_code_file
         self.job_name = job_name
 
-        self.set_defaults( files_dir )
+        self.set_defaults( files_dir, job_script_directory )
 
         self.cleanup_file_attributes = [ 'job_file', 'output_file', 'error_file', 'exit_code_file' ]
 
