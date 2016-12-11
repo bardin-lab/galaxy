@@ -65,7 +65,7 @@
     </script>
 </%def>
 
-<%def name="render_dependencies_section( install_resolver_dependencies_check_box, repository_dependencies_check_box, install_tool_dependencies_check_box, containers_dict, revision_label=None, export=False, requirements_status=None )">
+<%def name="render_dependencies_section( install_resolver_dependencies_check_box, repository_dependencies_check_box, install_tool_dependencies_check_box, containers_dict, revision_label=None, export=False )">
     <style type="text/css">
         #dependency_table{ table-layout:fixed;
                            width:100%;
@@ -125,8 +125,6 @@
             <button class="toggle-detail-section">
                 Display Details
             </button>
-        </p>
-        <p>
         </p>
      </div>
    %if export:
@@ -218,7 +216,7 @@
     </div>
     %endif
     <div style="clear: both"></div>
-    %if requirements_status and install_resolver_dependencies_check_box:
+    %if install_resolver_dependencies_check_box:
     <div class="form-row">
         <label>When available, install <a href="https://docs.galaxyproject.org/en/master/admin/conda_faq.html" target="_blank">Conda</a> managed tool dependencies?</label>
         ${install_resolver_dependencies_check_box.get_html()}
