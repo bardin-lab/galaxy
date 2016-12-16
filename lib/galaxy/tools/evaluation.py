@@ -490,7 +490,7 @@ class ToolEvaluator( object ):
         self.command_line = command_line
 
     def __can_build_symlink(self, da):
-        return da.dataset and da.dataset.ext and not da.dataset.datatype.composite_type and self.tool and not self.tool.parallelism
+        return da.dataset and da.dataset.ext and not da.dataset.datatype.composite_type and self.tool and not self.tool.parallelism and not self.tool.id == '__SET_METADATA__'
 
     def __build_symlinks(self):
         """

@@ -815,7 +815,7 @@ class JobWrapper( object ):
         outputs_to_working_directory = util.asbool(self.get_destination_configuration("outputs_to_working_directory", False))
         if outputs_to_working_directory:
             dataset_path_rewriter = OutputsToWorkingDirectoryPathRewriter( working_directory )
-        elif self.tool and not self.tool.parallelism:
+        elif self.tool and not self.tool.parallelism and not self.tool.id == '__SET_METADATA__':
             dataset_path_rewriter = InputSymlinkPathRewriter( working_directory )
         else:
             dataset_path_rewriter = NullDatasetPathRewriter()
