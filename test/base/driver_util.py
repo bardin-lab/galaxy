@@ -184,6 +184,7 @@ def setup_galaxy_config(
         library_import_dir=library_import_dir,
         log_destination="stdout",
         new_file_path=new_file_path,
+        override_tempdir=False,
         master_api_key=master_api_key,
         running_functional_tests=True,
         shed_tool_data_table_config=shed_tool_data_table_config,
@@ -707,7 +708,7 @@ class GalaxyTestDriver(TestDriver):
         )
         return functional.test_toolbox
 
-    def run_tool_test(self, tool_id, index=0):
+    def run_tool_test(self, tool_id, index=0, resource_parameters={}):
         import functional.test_toolbox
         functional.test_toolbox.toolbox = self.app.toolbox
         tool = self.app.toolbox.get_tool(tool_id)
@@ -718,7 +719,7 @@ class GalaxyTestDriver(TestDriver):
         test_case.master_api_key = get_master_api_key()
         test_case.user_api_key = get_user_api_key()
         test_case.setUp()
-        test_case.do_it(testdef)
+        test_case.do_it(testdef, resource_parameters=resource_parameters)
 
 
 def drive_test(test_driver_class):
