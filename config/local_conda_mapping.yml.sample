@@ -64,3 +64,9 @@
   to:
     name: diamond
     version: 0.8.24
+- from:
+    name: seqtk
+    version: 1.0-r75-dirty
+  to:
+    name: seqtk
+    version: 1.2
