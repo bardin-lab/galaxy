@@ -1263,6 +1263,7 @@ class AdminToolshed( AdminGalaxy ):
                                         tool_panel_section_select_field=tool_panel_section_select_field,
                                         tool_shed_url=tool_shed_url,
                                         tool_requirements=tool_requirements,
+                                        requirements_status=requirements_status,
                                         message=message,
                                         status=status )
 
