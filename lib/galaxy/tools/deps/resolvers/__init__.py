@@ -56,6 +56,14 @@ class MultipleDependencyResolver:
 
         :param requirements: list of tool requirements
         :param type: [ToolRequirement] or ToolRequirements
+        :rtype: [Dependency]
+        """
+        Given multiple requirements yields a list of Dependency objects if and only if they may all be resolved together.
+
+        Unsuccessfull attempts should return an empty list.
+
+        :param requirements: list of tool requirements
+        :param type: [ToolRequirement] or ToolRequirements
 
         :returns: list of resolved dependencies
         :rtype: [Dependency]
