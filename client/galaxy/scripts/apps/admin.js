@@ -113,6 +113,10 @@ window.app = function app( options, bootstrapped ){
                     url             : 'admin/set_quota_default' + id,
                     redirect        : 'admin/quotas'
                 },
+                create_form: {
+                    url             : 'forms/create_form' + id,
+                    redirect        : 'admin/forms'
+                },
                 edit_form: {
                     url             : 'forms/edit_form' + id,
                     redirect        : 'admin/forms'
