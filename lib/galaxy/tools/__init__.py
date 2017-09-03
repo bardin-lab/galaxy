@@ -2311,7 +2311,9 @@ class DatabaseOperationTool(Tool):
         if self.require_dataset_ok:
             return (model.Dataset.states.OK,)
         else:
-            return model.Dataset.terminal_states
+            # For DatabaseOperationTools we include the discarded state in Terminal states,
+            # so that we can filter collections and exclude datasets in that state
+            return model.Dataset.terminal_states + (model.Dataset.states.DISCARDED,)
 
     @property
     def allow_errored_inputs(self):
