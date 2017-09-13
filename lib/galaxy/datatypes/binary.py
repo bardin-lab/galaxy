@@ -252,15 +252,18 @@ class Bam(Binary):
             message = 'Attempting to use functionality requiring samtools, but it cannot be located on Galaxy\'s PATH.'
             raise Exception(message)
 
-        p = subprocess.Popen(['samtools', '--version-only'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        output, error = p.communicate()
-        # --version-only is available
-        # Format is <version x.y.z>+htslib-<a.b.c>
-        if p.returncode == 0:
+        # Get the version of samtools via --version-only, if available
+        try:
+            output = subprocess.check_output(['samtools', '--version-only'])
+            # --version-only is available
+            # Format is <version x.y.z>+htslib-<a.b.c>
             version = output.split('+')[0]
             return version
+        except subprocess.CalledProcessError:
+            # --version-only not available
+            pass
 
-        output = subprocess.Popen(['samtools'], stderr=subprocess.PIPE, stdout=subprocess.PIPE).communicate()[1]
+        output = subprocess.check_output(['samtools'])
         lines = output.split('\n')
         for line in lines:
             if line.lower().startswith('version'):
@@ -1302,7 +1305,7 @@ class ExcelXls(Binary):
     edam_format = "format_3468"
 
     def sniff(self, filename):
-        mime_type = subprocess.check_output(['file', '--mime-type', filename])
+        mime_type = subprocess.check_output(['file', '--mime-type', filename]).strip()
         return "application/vnd.ms-excel" in mime_type
 
     def get_mime(self):
