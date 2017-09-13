@@ -151,6 +151,7 @@ class Ipynb(Json):
             ofile_handle.close()
             try:
                 cmd = ['jupyter', 'nbconvert', '--to', 'html', '--template', 'full', dataset.file_name, '--output', ofilename]
+                log.info("Calling command %s", ' '.join(cmd))
                 subprocess.check_call(cmd)
                 ofilename = '%s.html' % ofilename
             except subprocess.CalledProcessError:
