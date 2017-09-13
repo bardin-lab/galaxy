@@ -18,7 +18,6 @@ from galaxy.util import (
     safe_relpath,
     string_as_bool,
     umask_fix_perms,
-    which,
 )
 from galaxy.util.sleeper import Sleeper
 
@@ -68,9 +67,10 @@ class S3ObjectStore(ObjectStore):
             self.cache_monitor_thread.start()
             log.info("Cache cleaner manager started")
         # Test if 'axel' is available for parallel download and pull the key into cache
-        if which('axel'):
+        try:
+            subprocess.check_call(['axel'])
             self.use_axel = True
-        else:
+        except OSError:
             self.use_axel = False
 
     def _configure_connection(self):
