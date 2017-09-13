@@ -1,13 +1,13 @@
 import contextlib
 import logging
 import os
+import requests
 import shutil
 import tarfile
 import tempfile
 import threading
 from time import gmtime, strftime
 
-import requests
 from sqlalchemy import and_, false
 
 import tool_shed.repository_types.util as rt_util

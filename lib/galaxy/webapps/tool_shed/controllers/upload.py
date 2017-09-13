@@ -1,10 +1,9 @@
 import logging
 import os
+import requests
 import shutil
 import tarfile
 import tempfile
-
-import requests
 
 from galaxy import util
 from galaxy import web

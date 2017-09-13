@@ -1,12 +1,10 @@
 """
 Contains the main interface in the Universe class
 """
-from __future__ import absolute_import
-
 import cgi
 import os
-
 import requests
+
 from paste.httpexceptions import HTTPNotFound, HTTPBadGateway
 
 from galaxy import web

@@ -4,9 +4,8 @@ Connects to sites and determines which builds are available at each.
 """
 from __future__ import print_function
 
-import xml.etree.ElementTree as ElementTree
-
 import requests
+import xml.etree.ElementTree as ElementTree
 
 sites = ['http://genome.ucsc.edu/cgi-bin/',
          'http://archaea.ucsc.edu/cgi-bin/',
@@ -20,11 +19,11 @@ def main():
         trackurl = sites[i] + "hgTracks?"
         builds = []
         try:
-            text = requests.get(site).text
+            page = requests.get(site)
         except:
             print("#Unable to connect to " + site)
             continue
-
+        text = page.text
         try:
             tree = ElementTree.fromstring(text)
         except:

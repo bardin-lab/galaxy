@@ -11,12 +11,11 @@ import logging
 import os
 import os.path
 import re
+import requests
 import string
 import time
 from glob import glob
 from tempfile import NamedTemporaryFile
-
-import requests
 
 from galaxy import util
 from galaxy.util.dictifiable import Dictifiable

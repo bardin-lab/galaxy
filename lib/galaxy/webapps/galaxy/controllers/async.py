@@ -6,6 +6,7 @@ from __future__ import absolute_import
 
 import logging
 import urllib
+import requests
 
 import requests
 
