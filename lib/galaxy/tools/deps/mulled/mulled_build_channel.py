@@ -22,7 +22,6 @@ import os
 import subprocess
 import sys
 import time
-import subprocess
 
 from ._cli import arg_parser
 from .mulled_build import (
