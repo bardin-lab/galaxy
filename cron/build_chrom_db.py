@@ -15,7 +15,6 @@ from __future__ import print_function
 
 import fileinput
 import os
-import requests
 import sys
 
 import requests
