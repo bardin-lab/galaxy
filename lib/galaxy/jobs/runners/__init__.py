@@ -394,6 +394,7 @@ class JobState(object):
     runner_states = Bunch(
         WALLTIME_REACHED='walltime_reached',
         MEMORY_LIMIT_REACHED='memory_limit_reached',
+        JOB_OUTPUT_NOT_RETURNED_FROM_CLUSTER='Job output not returned from cluster',
         UNKNOWN_ERROR='unknown_error',
         GLOBAL_WALLTIME_REACHED='global_walltime_reached',
         OUTPUT_SIZE_LIMIT='output_size_limit'
@@ -606,7 +607,7 @@ class AsynchronousJobRunner(BaseJobRunner):
             except Exception as e:
                 if which_try == self.app.config.retry_job_output_collection:
                     stdout = ''
-                    stderr = 'Job output not returned from cluster'
+                    stderr = job_state.runner_states.JOB_OUTPUT_NOT_RETURNED_FROM_CLUSTER
                     log.error('(%s/%s) %s: %s' % (galaxy_id_tag, external_job_id, stderr, str(e)))
                     collect_output_success = False
                 else:
@@ -615,6 +616,7 @@ class AsynchronousJobRunner(BaseJobRunner):
 
         if not collect_output_success:
             job_state.fail_message = stderr
+            job_state.runner_state = job_state.runner_states.JOB_OUTPUT_NOT_RETURNED_FROM_CLUSTER
             self.mark_as_failed(job_state)
             return
 
