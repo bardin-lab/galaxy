@@ -17,7 +17,6 @@
             Use this form to describe rules for import datasets. At least one column should be defined to a source to fetch data from (URLs, FTP files, etc...). Be sure to specify at least one column as a list identifier - specify more to created nested list structures. Specify a column to serve as "collection name" to group datasets into multiple collections.
         </div>
         <div class="middle flex-row flex-row-container" v-if="ruleView == 'source'">
-            <p class="alert-message" v-if="ruleSourceError">{{ ruleSourceError }}</p>
             <textarea class="rule-source" v-model="ruleSource"></textarea>
         </div>
         <div class="middle flex-row flex-row-container" v-else>
@@ -53,18 +52,7 @@
                                         :display-rule-type="displayRuleType"
                                         :builder="this">
                             <column-selector :target.sync="addColumnRegexTarget" :col-headers="activeRuleColHeaders" />
-                            <input type="radio" v-model="addColumnRegexType" value="global">Create column matching expression.<br />
-                            <input type="radio" v-model="addColumnRegexType" value="groups">Create columns matching expression groups.<br />
-                            <input type="radio" v-model="addColumnRegexType" value="replacement">Create column from expression replacement.<br />
-                            <regular-expression-input :target.sync="addColumnRegexExpression" />
-                            <label v-if="addColumnRegexType=='groups'">
-                                {{ l("Number of Groups") }}
-                                <input type="number" v-model="addColumnRegexGroupCount" min="1" />
-                            </label>
-                            <label v-if="addColumnRegexType=='replacement'">
-                                {{ l("Replacement Expression") }}
-                                <input type="text" v-model="addColumnRegexReplacement" class="rule-replacement" />
-                            </label>
+                            <regular-expression-input :target.sync="addColumnExpression" />
                         </rule-component>
                         <rule-component rule-type="add_column_concatenate"
                                         :display-rule-type="displayRuleType"
@@ -182,14 +170,8 @@
                                  v-for="map in mapping"
                                  v-bind:index="map.index"
                                  v-bind:key="map.type">
-                                <column-selector 
-                                    :class="'rule-map-' + map.type.replace(/_/g, '-')"
-                                    :label="mappingTargets()[map.type].label"
-                                    :target.sync="map.columns"
-                                    :col-headers="colHeaders"
-                                    :multiple="mappingTargets()[map.type].multiple"
-                                    :ordered="true"
-                                    :value-as-list="true" />
+                                 <column-selector :class="'rule-map-' + map.type.replace(/_/g, '-')" :label="mappingTargets()[map.type].label" :target.sync="map.columns" :col-headers="colHeaders" :multiple="mappingTargets()[map.type].multiple"
+                                 :value-as-list="true" />
                             </div>
                             <div class="buttons">
                                 <div class="btn-group" v-if="unmappedTargets.length > 0">
@@ -210,7 +192,7 @@
                         <div class="rule-summary" v-if="displayRuleType == null">
                             <span class="title">
                                 {{ l("Rules") }}
-                                <span class="fa fa-wrench rule-builder-view-source" :title="titleViewSource" @click="viewSource"></span>
+                                <span class="fa fa-wrench" :title="titleViewSource" @click="viewSource"></span>
                             </span>
                             <div v-if="jaggedData" class="rule-warning">
                                 Rows contain differing numbers of columns, there was likely a problem parsing your data.
@@ -244,7 +226,7 @@
                                     <span class="fa fa-plus"></span> {{ l("Rules") }}<span class="caret"></span>
                                   </button>
                                   <ul class="dropdown-menu" role="menu">
-                                    <rule-target-component :builder="this" rule-type="sort" />
+                                    <li><a @click="addNewRule('sort')">Add Sorting</a></li>
                                     <rule-target-component :builder="this" rule-type="remove_columns" />
                                     <rule-target-component :builder="this" rule-type="split_columns" />
                                     <rule-target-component :builder="this" rule-type="swap_columns" />
@@ -369,8 +351,6 @@ import HotTable from 'vue-handsontable-official';
 import Popover from "mvc/ui/ui-popover";
 import UploadUtils from "mvc/upload/upload-utils";
 import JobStatesModel from "mvc/history/job-states-model";
-import Vue from "vue";
-
 
 const MAPPING_TARGETS = {
     list_identifiers: {
@@ -423,7 +403,7 @@ const MAPPING_TARGETS = {
     }
 }
 
-const applyRegex = function(regex, target, data, replacement, groupCount) {
+const applyRegex = function(regex, target, data) {
     let regExp;
     try {
         regExp = RegExp(regex);
@@ -433,25 +413,17 @@ const applyRegex = function(regex, target, data, replacement, groupCount) {
     let failedCount = 0;
     function newRow(row) {
         const source = row[target];
-        if (!replacement) {
-            const match = regExp.exec(source);
-            if(!match) {
-              failedCount++;
-              return null;
-            }
-            groupCount = groupCount && parseInt(groupCount);
-            if(groupCount) {
-                if(match.length != (groupCount + 1)) {
-                    failedCount++;
-                    return null;
-                }
-                return row.concat(match.splice(1, match.length));
-            } else {
-                return row.concat([match[0]]);
-            }
+        const match = regExp.exec(source);
+        let newValue;
+        if(!match) {
+          failedCount++;
+          return null;
+        } else if(match.length > 1) {
+          newValue = match[1];
         } else {
-            return row.concat([source.replace(regExp, replacement)]);
+          newValue = match[0];
         }
+        return row.concat([newValue]);
     }
     data = data.map(newRow);
     if(failedCount > 0) {
@@ -556,36 +528,19 @@ const Rules = {
         init: (component, rule) => {
             if(!rule) {
                 component.addColumnRegexTarget = 0;
-                component.addColumnRegexExpression = "";
-                component.addColumnRegexReplacement = null;
-                component.addColumnRegexGroupCount = null;
+                component.addColumnExpression = "";
             } else {
                 component.addColumnRegexTarget = rule.target_column;
-                component.addColumnRegexExpression = rule.expression;
-                component.addColumnRegexReplacement = rule.replacement;
-                component.addColumnRegexGroupCount = rule.group_count;
+                component.expression = rule.expression;
             }
-            let addColumnRegexType = "global";
-            if(component.addColumnRegexGroupCount) {
-                addColumnRegexType = "groups";
-            } else if (component.addColumnRegexReplacement) {
-                addColumnRegexType = "replacement";
-            }
-            component.addColumnRegexType = addColumnRegexType;
         },
         save: (component, rule) => {
             rule.target_column = component.addColumnRegexTarget;
-            rule.expression = component.addColumnRegexExpression;
-            if(component.addColumnRegexReplacement) {
-                rule.replacement = component.addColumnRegexReplacement;
-            }
-            if(component.addColumnRegexGroupCount) {
-                rule.group_count = component.addColumnRegexGroupCount;
-            }
+            rule.expression = component.addColumnExpression;
         },
         apply: (rule, data, sources) => {
           const target = rule.target_column;
-          return applyRegex(rule.expression, target, data, rule.replacement, rule.group_count);
+          return applyRegex(rule.expression, target, data);
         }
     },
     add_column_concatenate: {
@@ -909,7 +864,6 @@ const Rules = {
         }
     },
     sort: {
-        title: _l("Sort"),
         display: (rule, colHeaders) => {
             return `Sort on column ${colHeaders[rule.target_column]}`;
         },
@@ -929,12 +883,9 @@ const Rules = {
         apply: (rule, data, sources) => {
           const target = rule.target_column;
           const numeric = rule.numeric;
-
-          const sortable = _.zip(data, sources);
-
-          const sortFunc = (a, b) => {
-            let aVal = a[0][target];
-            let bVal = b[0][target];
+          const sort = (a, b) => {
+            let aVal = a[target];
+            let bVal = b[target];
             if(numeric) {
               aVal = parseFloat(aVal);
               bVal = parseFloat(bVal);
@@ -947,15 +898,10 @@ const Rules = {
               return 0;
             }
           }
-
-          sortable.sort(sortFunc);
-
-          const newData = [];
-          const newSources = [];
-
-          sortable.map((zipped) => { newData.push(zipped[0]); newSources.push(zipped[1]); });
-
-          return {data: newData, sources: newSources};
+          const newData = data.splice();
+          data.sort(sort);
+          sources.sort(sort);
+          return {data, sources};
         }
     },
     swap_columns: {
@@ -1074,44 +1020,13 @@ const Select2 = {
 
 const ColumnSelector = {
     template: `
-        <div class="rule-column-selector" v-if="!multiple || !ordered">
-            <label>
-                {{ label }}
-                <select2 :value="target" @input="handleInput" :multiple="multiple">
-                    <option v-for="(col, index) in remainingHeaders" :value="index">{{ col }}</option>
-                </select2>
-            </label>
-        </div>
-        <div class="rule-column-selector" v-else>
-            {{ label }} 
-            <ol>
-                <li v-for="(targetEl, index) in target"
-                    v-bind:index="index"
-                    v-bind:key="targetEl">
-                    {{ colHeaders[targetEl] }}
-                    <span class="fa fa-times" @click="handleRemove(index)"></span>
-                    <span class="fa fa-arrow-up" v-if="index !== 0" @click="moveUp(index)"></span>
-                    <span class="fa fa-arrow-down" v-if="index < target.length - 1" @click="moveUp(index + 1)"></span>
-                </li>
-                <li v-if="this.target.length < this.colHeaders.length">
-                    <span v-if="!orderedEdit">
-                        <i @click="orderedEdit = true">... {{ l("Assign Another Column") }}</i>
-                    </span>
-                    <span v-else>
-                        <select2 @input="handleAdd">
-                            <option v-for="(col, index) in remainingHeaders" :value="index">{{ col }}</option>
-                        </select2>
-                    </span>
-                </li>
-            </ol>
-        </div>
+        <div class="rule-column-selector"><label>
+            {{ label }}
+            <select2 :value="target" @input="handleInput" :multiple="multiple">
+                <option v-for="(col, index) in colHeaders" :value="index">{{ col }}</option>
+            </select2>
+        </label></div>
     `,
-    data: function() {
-        return {
-            'orderedEdit': false,
-            l: _l,
-        }
-    },
     props: {
         target: {
             required: true
@@ -1130,30 +1045,10 @@ const ColumnSelector = {
             required: false,
             default: false,
         },
-        ordered: {
-            type: Boolean,
-            required: false,
-            default: false,
-        },
         valueAsList: {
             type: Boolean,
             required: false,
             default: false,
-        }
-    },
-    computed: {
-        remainingHeaders() {
-            const colHeaders = this.colHeaders;
-            if(!this.multiple) {
-                return colHeaders;
-            }
-            const remaining = {};
-            for(let key in colHeaders) {
-                if(this.target.indexOf(parseInt(key)) === -1) {
-                    remaining[key] = colHeaders[key];
-                }
-            }
-            return remaining;
         }
     },
     methods: {
@@ -1169,18 +1064,6 @@ const ColumnSelector = {
                 }
                 this.$emit('update:target', val);
             }
-        },
-        handleAdd(value) {
-            this.target.push(parseInt(value));
-            this.orderedEdit = false;
-        },
-        handleRemove(index) {
-            this.target.splice(index, 1);
-        },
-        moveUp(value) {
-            const swapVal = this.target[value - 1];
-            Vue.set(this.target, value - 1, this.target[value]);
-            Vue.set(this.target, value, swapVal);
         }
     },
     components: {
@@ -1390,7 +1273,6 @@ export default {
         state: 'build',  // 'build', 'error', 'wait',
         ruleView: 'normal', // 'normal' or 'source'
         ruleSource: '',
-        ruleSourceError: null,
         errorMessage: '',
         hasRuleErrors: false,
         jaggedData: false,
@@ -1405,10 +1287,7 @@ export default {
         activeRuleIndex: null,
         addColumnRegexTarget: 0,
         addColumnBasenameTarget: 0,
-        addColumnRegexExpression: "",
-        addColumnRegexReplacement: null,
-        addColumnRegexGroupCount: null,
-        addColumnRegexType: "global",
+        addColumnExpression: "",
         addColumnConcatenateTarget0: 0,
         addColumnConcatenateTarget1: 0,
         addColumnRownumStart: 1,
@@ -1700,17 +1579,9 @@ export default {
             asJson.genome = this.genome;
         }
         this.ruleSource = JSON.stringify(asJson, replacer, '  ');
-        this.ruleSourceError = null;
     },
     attemptRulePreview() { // Leave source mode if rules are valid and view.
-        this.ruleSourceError = null;
-        let asJson;
-        try {
-            asJson = JSON.parse(this.ruleSource);
-        } catch (error) {
-            this.ruleSourceError = "Problem parsing your rules.";
-            return;
-        }
+        const asJson = JSON.parse(this.ruleSource);
         this.updateFromSource(asJson);
         this.ruleView = 'normal';
     },
@@ -2075,16 +1946,6 @@ export default {
       UploadUtils.getUploadDatatypes((extensions) => {this.extensions = extensions; this.extension = UploadUtils.DEFAULT_EXTENSION}, false, UploadUtils.AUTO_EXTENSION);
       UploadUtils.getUploadGenomes((genomes) => {this.genomes = genomes; this.genome = UploadUtils.DEFAULT_GENOME;}, UploadUtils.DEFAULT_GENOME);
   },
-  watch: {
-      'addColumnRegexType': function (val) {
-          if (val == "groups") {
-              this.addColumnRegexGroupCount = 1;
-          }
-          if (val == "replacement") {
-              this.addColumnRegexReplacement = "$&";
-          }
-      },
-  },
   components: {
     HotTable,
     RuleComponent,
@@ -2103,7 +1964,7 @@ export default {
 <style>
   .table-column {
     width: 100%;
-    /* overflow: scroll; */
+    overflow: scroll;
   }
   .vertical #hot-table {
     width: 100%;
@@ -2155,13 +2016,6 @@ export default {
     height: 400px;
   }
   .rules li {
-    list-style-type: circle;
-    list-style-position: inside;
-    padding: 5px;
-    padding-top: 0px;
-    padding-bottom: 0px;
-  }
-  .rule-column-selector li {
     list-style-type: circle;
     list-style-position: inside;
     padding: 5px;

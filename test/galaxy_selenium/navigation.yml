@@ -294,9 +294,6 @@ rule_builder:
     mapping_ok: '.rule-mapping-ok'
     main_button_ok: '.rule-btn-okay'
     collection_name_input: 'input.collection-name'
-    view_source: '.rule-builder-view-source'
-    source: '.rule-source'
-    table: '#hot-table .htCore'
 
 charts:
   selectors:

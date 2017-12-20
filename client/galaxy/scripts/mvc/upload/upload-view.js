@@ -9,7 +9,6 @@ import UploadViewDefault from "mvc/upload/default/default-view";
 import UploadViewComposite from "mvc/upload/composite/composite-view";
 import UploadViewCollection from "mvc/upload/collection/collection-view";
 import UploadViewRuleBased from "mvc/upload/collection/rules-input-view";
-
 export default Backbone.View.extend({
     options: {
         nginx_upload_path: "",
@@ -28,16 +27,17 @@ export default Backbone.View.extend({
     list_genomes: [],
 
     initialize: function(options) {
+        var self = this;
         this.options = Utils.merge(options, this.options);
 
         // create view for upload/progress button
         this.ui_button = new UploadButton.View({
-            onclick: e => {
+            onclick: function(e) {
                 e.preventDefault();
-                this.show();
+                self.show();
             },
-            onunload: () => {
-                var percentage = this.ui_button.model.get("percentage", 0);
+            onunload: function() {
+                var percentage = self.ui_button.model.get("percentage", 0);
                 if (percentage > 0 && percentage < 100) {
                     return "Several uploads are queued.";
                 }
@@ -52,8 +52,8 @@ export default Backbone.View.extend({
             list_extensions => {
                 this.list_extensions = list_extensions;
             },
-            this.options.datatypes_disable_auto,
-            this.options.auto
+            options.datatypes_disable_auto,
+            options.auto
         );
 
         // load genomes
